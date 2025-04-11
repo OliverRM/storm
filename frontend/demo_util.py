@@ -19,7 +19,7 @@ from knowledge_storm import (
     STORMWikiLMConfigs,
 )
 from knowledge_storm.lm import OpenAIModel
-from knowledge_storm.rm import YouRM
+from knowledge_storm.rm import SerperRM
 from knowledge_storm.storm_wiki.modules.callback import BaseCallbackHandler
 from knowledge_storm.utils import truncate_filename
 from stoc import stoc
@@ -575,18 +575,20 @@ def clear_other_page_session_state(page_index: Optional[int]):
 
 
 def set_storm_runner():
-    current_working_dir = os.path.join(get_demo_dir(), "DEMO_WORKING_DIR")
+    current_working_dir = os.path.join(get_demo_dir(), "output")
     if not os.path.exists(current_working_dir):
         os.makedirs(current_working_dir)
 
     # configure STORM runner
     llm_configs = STORMWikiLMConfigs()
     llm_configs.init_openai_model(
-        openai_api_key=st.secrets["OPENAI_API_KEY"], openai_type="openai"
+        openai_api_key=st.secrets["OPENAI_API_KEY"],
+        azure_api_key="",
+        openai_type="openai",
     )
     llm_configs.set_question_asker_lm(
         OpenAIModel(
-            model="gpt-4-1106-preview",
+            model="gpt-4o",
             api_key=st.secrets["OPENAI_API_KEY"],
             api_provider="openai",
             max_tokens=500,
@@ -602,7 +604,7 @@ def set_storm_runner():
         retrieve_top_k=5,
     )
 
-    rm = YouRM(ydc_api_key=st.secrets["YDC_API_KEY"], k=engine_args.search_top_k)
+    rm = SerperRM(serper_search_api_key=st.secrets["SERPER_API_KEY"], k=engine_args.search_top_k)
 
     runner = STORMWikiRunner(engine_args, llm_configs, rm)
     st.session_state["runner"] = runner

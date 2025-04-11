@@ -25,7 +25,7 @@ This is a minimal user interface for `STORMWikiRunner` which includes the follow
     ```bash
     streamlit run storm.py
     ```
-   The user interface will create a `DEMO_WORKING_DIR` directory in the current directory to store the outputs.
+   The user interface will create a `output` directory in the current directory to store the outputs.
 
 ## Customization
 
