@@ -23,10 +23,26 @@ def handle_not_started():
                 st.session_state["page3_topic"] = st.text_input(
                     label="page3_topic", label_visibility="collapsed"
                 )
+
+                control_col, button_col = st.columns([3, 1])
+                # Mode selection for STORM or Co-STORM
+                with control_col:
+                    if "page3_mode" not in st.session_state:
+                        st.session_state["page3_mode"] = "STORM"  # Default to STORM
+                    st.session_state["page3_mode"] = st.segmented_control(
+                        "Mode",
+                        options=["STORM", "Co-STORM"],
+                        default="STORM",
+                        label_visibility="collapsed",
+                    )
+                # Submit button to start the search
+                with button_col:
+                    submit_button = st.form_submit_button(label="Research")
+
+                # Will be set to false if the topic is empty
+                # If false, a warning message will be shown
                 pass_appropriateness_check = True
 
-                # Submit button for the form
-                submit_button = st.form_submit_button(label="Research")
                 # only start new search when button is clicked, not started, or already finished previous one
                 if submit_button and st.session_state["page3_write_article_state"] in [
                     "not started",
