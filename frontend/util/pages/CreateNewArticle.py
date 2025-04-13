@@ -1,14 +1,15 @@
 import os
 import time
 
-import demo_util
 import streamlit as st
-from demo_util import (
-    DemoFileIOHelper,
-    DemoTextProcessingHelper,
-    DemoUIHelper,
-    truncate_filename,
-)
+
+from util.file_io import DemoFileIOHelper
+from util.text_processing import DemoTextProcessingHelper
+from util.ui_components import DemoUIHelper
+from util.display import display_article_page, _display_persona_conversations
+from util.runner import get_demo_dir, clear_other_page_session_state, set_storm_runner
+from util.callback_handlers import StreamlitCallbackHandler
+from knowledge_storm.utils import truncate_filename
 
 
 def handle_not_started():
@@ -75,12 +76,12 @@ def handle_not_started():
 
 def handle_initiated():
     if st.session_state["page3_write_article_state"] == "initiated":
-        current_working_dir = os.path.join(demo_util.get_demo_dir(), "output")
+        current_working_dir = os.path.join(get_demo_dir(), "output")
         if not os.path.exists(current_working_dir):
             os.makedirs(current_working_dir)
 
         if "runner" not in st.session_state:
-            demo_util.set_storm_runner()
+            set_storm_runner()
         st.session_state["page3_current_working_dir"] = current_working_dir
         st.session_state["page3_write_article_state"] = "pre_writing"
 
@@ -90,7 +91,7 @@ def handle_pre_writing():
         status = st.status(
             "I am brain**STORM**ing now to research the topic. (This may take 2-3 minutes.)"
         )
-        st_callback_handler = demo_util.StreamlitCallbackHandler(status)
+        st_callback_handler = StreamlitCallbackHandler(status)
         with status:
             # STORM main gen outline
             st.session_state["runner"].run(
@@ -106,7 +107,7 @@ def handle_pre_writing():
                 st.session_state["page3_topic_name_truncated"],
                 "conversation_log.json",
             )
-            demo_util._display_persona_conversations(
+            _display_persona_conversations(
                 DemoFileIOHelper.read_json_file(conversation_log_path)
             )
             st.session_state["page3_write_article_state"] = "final_writing"
@@ -156,7 +157,7 @@ def handle_completed():
         current_article_file_path_dict = current_working_dir_paths[
             st.session_state["page3_topic_name_truncated"]
         ]
-        demo_util.display_article_page(
+        display_article_page(
             selected_article_name=st.session_state["page3_topic_name_cleaned"],
             selected_article_file_path_dict=current_article_file_path_dict,
             show_title=True,
@@ -165,7 +166,7 @@ def handle_completed():
 
 
 def create_new_article_page():
-    demo_util.clear_other_page_session_state(page_index=3)
+    clear_other_page_session_state(page_index=3)
 
     if "page3_write_article_state" not in st.session_state:
         st.session_state["page3_write_article_state"] = "not started"

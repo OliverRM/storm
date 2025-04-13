@@ -1,9 +1,12 @@
 import os
 
-import demo_util
 import streamlit as st
-from demo_util import DemoFileIOHelper, DemoUIHelper
 from streamlit_card import card
+
+from util.file_io import DemoFileIOHelper
+from util.ui_components import DemoUIHelper
+from util.display import display_article_page
+from util.runner import get_demo_dir
 
 
 # set page config and display title
@@ -21,7 +24,7 @@ def my_articles_page():
 
     # sync my articles
     if "page2_user_articles_file_path_dict" not in st.session_state:
-        local_dir = os.path.join(demo_util.get_demo_dir(), "output")
+        local_dir = os.path.join(get_demo_dir(), "output")
         os.makedirs(local_dir, exist_ok=True)
         st.session_state["page2_user_articles_file_path_dict"] = (
             DemoFileIOHelper.read_structure_to_dict(local_dir)
@@ -35,7 +38,7 @@ def my_articles_page():
                 title=" / ".join(card_title),
                 text=article_name.replace("_", " "),
                 image=DemoFileIOHelper.read_image_as_base64(
-                    os.path.join(demo_util.get_demo_dir(), "assets", "void.jpg")
+                    os.path.join(get_demo_dir(), "assets", "void.jpg")
                 ),
                 styles=DemoUIHelper.get_article_card_UI_style(boarder_color="#9AD8E1"),
             )
@@ -86,7 +89,7 @@ def my_articles_page():
                     title="Get started",
                     text="Start your first research!",
                     image=DemoFileIOHelper.read_image_as_base64(
-                        os.path.join(demo_util.get_demo_dir(), "assets", "void.jpg")
+                        os.path.join(get_demo_dir(), "assets", "void.jpg")
                     ),
                     styles=DemoUIHelper.get_article_card_UI_style(),
                 )
@@ -101,7 +104,7 @@ def my_articles_page():
             "page2_user_articles_file_path_dict"
         ][selected_article_name]
 
-        demo_util.display_article_page(
+        display_article_page(
             selected_article_name=selected_article_name,
             selected_article_file_path_dict=selected_article_file_path_dict,
             show_title=True,

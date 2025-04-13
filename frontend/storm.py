@@ -3,8 +3,8 @@ import os
 script_dir = os.path.dirname(os.path.abspath(__file__))
 wiki_root_dir = os.path.dirname(os.path.dirname(script_dir))
 
-import demo_util
-from pages_util import MyArticles, CreateNewArticle
+from util.runner import clear_other_page_session_state
+from util.pages import MyArticles, CreateNewArticle
 from streamlit_float import *
 from streamlit_option_menu import option_menu
 
@@ -57,10 +57,10 @@ def main():
             st.session_state["selected_page"] = None
 
         if menu_selection == "My Articles":
-            demo_util.clear_other_page_session_state(page_index=2)
+            clear_other_page_session_state(page_index=2)
             MyArticles.my_articles_page()
         elif menu_selection == "Create New Article":
-            demo_util.clear_other_page_session_state(page_index=3)
+            clear_other_page_session_state(page_index=3)
             CreateNewArticle.create_new_article_page()
 
 
