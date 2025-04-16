@@ -35,7 +35,7 @@ def _display_references(citation_dict):
         st.markdown("**No references available**")
 
 
-def _display_persona_conversations(conversation_log):
+def display_persona_conversations(conversation_log):
     """
     Display persona conversation in dialogue UI
     """
@@ -59,8 +59,8 @@ def _display_persona_conversations(conversation_log):
                         st.markdown(message["content"])
 
 
-def _display_main_article(
-    selected_article_file_path_dict, show_reference=True, show_conversation=True
+def display_main_article(
+    selected_article_file_path_dict, show_reference=True
 ):
     from util.file_io import DemoFileIOHelper
     
@@ -83,29 +83,3 @@ def _display_main_article(
         with st.sidebar.expander("**References**", expanded=True):
             with st.container(height=800, border=False):
                 _display_references(citation_dict=article_data.get("citations", {}))
-
-    # display conversation history
-    if show_conversation and "conversation_log" in article_data:
-        with st.expander(
-            "**STORM** is powered by a knowledge agent that proactively research a given topic by asking good questions coming from different perspectives.\n\n"
-            ":sunglasses: Click here to view the agent's brain**STORM**ing process!"
-        ):
-            _display_persona_conversations(
-                conversation_log=article_data.get("conversation_log", {})
-            )
-
-
-def display_article_page(
-    selected_article_name,
-    selected_article_file_path_dict,
-    show_title=True,
-    show_main_article=True,
-):
-    if show_title:
-        st.markdown(
-            f"<h2 style='text-align: center;'>{selected_article_name.replace('_', ' ')}</h2>",
-            unsafe_allow_html=True,
-        )
-
-    if show_main_article:
-        _display_main_article(selected_article_file_path_dict)
