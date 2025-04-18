@@ -1,14 +1,13 @@
-import os
-import time
-
 import streamlit as st
 
-from util.file_io import DemoFileIOHelper
+from util.file_io import Article
 from util.display import display_main_article, display_persona_conversations
 from util.callback_handlers import StreamlitCallbackHandler
 
 
 def article_detail_page():
+    article: Article = st.session_state["articles"][st.session_state["selected_article"]]
+    
     # Setup navigation sidebar
     with st.sidebar:
         if st.button("Back to Home"):
@@ -23,7 +22,7 @@ def article_detail_page():
             st.rerun()
 
     # Display article title
-    st.header(st.session_state["selected_article"].replace('_', ' '))
+    st.header(article.name)
     
 
     # Tabs to switch between conversation and article
@@ -32,7 +31,7 @@ def article_detail_page():
     # Handle article generation mode
     with conversation_tab:
         if "write_article_state" not in st.session_state:
-            st.session_state["write_article_state"] = "pre_writing"
+            st.session_state["write_article_state"] = "reviewing"
         
         # Article generation process
         if st.session_state["write_article_state"] == "pre_writing":
@@ -78,20 +77,9 @@ def article_detail_page():
         elif st.session_state["write_article_state"] == "completed":
             st.success("STORM has finished writing the article.")
         
-        conversation_log_path = st.session_state["selected_article_file_path_dict"]["conversation_log.json"]
-        display_persona_conversations(
-            DemoFileIOHelper.read_json_file(conversation_log_path)
-        )
+        display_persona_conversations(article.id)
 
     # Handle article viewing mode
     with article_tab:
-        if "selected_article" not in st.session_state or "selected_article_file_path_dict" not in st.session_state:
-            if st.session_state["write_article_state"] in ["pre_writing", "final_writing"]:
-                st.warning("Please wait patiently for the article to be generated... See the Conversation tab for updates.")
-            else:
-                st.error("Article information missing")
-                st.session_state["selected_page"] = "home"
-                st.rerun()
-        
         # Display the selected article
-        display_main_article(st.session_state["selected_article_file_path_dict"])
+        display_main_article(article.id)

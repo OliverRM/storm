@@ -15,17 +15,16 @@ class DemoUIHelper:
         )
 
     @staticmethod
-    def get_article_card_UI_style(boarder_color="#9AD8E1"):
+    def get_article_card_UI_style(border_color="#9AD8E1"):
         return {
             "card": {
                 "width": "100%",
                 "height": "116px",
-                "max-width": "640px",
                 "background-color": "#FFFFF",
                 "border": "1px solid #CCC",
                 "padding": "20px",
                 "border-radius": "5px",
-                "border-left": f"0.5rem solid {boarder_color}",
+                "border-left": f"0.5rem solid {border_color}",
                 "box-shadow": "0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15)",
                 "margin": "0px",
             },

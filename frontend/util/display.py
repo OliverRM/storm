@@ -2,6 +2,7 @@ import streamlit as st
 from stoc import stoc
 
 from util.text_processing import DemoTextProcessingHelper
+from util.file_io import read_json_file, assemble_article_data
 
 
 def _display_main_article_text(article_text, citation_dict, table_content_sidebar):
@@ -35,13 +36,13 @@ def _display_references(citation_dict):
         st.markdown("**No references available**")
 
 
-def display_persona_conversations(conversation_log):
+def display_persona_conversations(article_id):
     """
     Display persona conversation in dialogue UI
     """
     # get personas list as (persona_name, persona_description, dialogue turns list) tuple
     parsed_conversation_history = DemoTextProcessingHelper.parse_conversation_history(
-        conversation_log
+        read_json_file(article_id, "conversation_log.json")
     )
     # construct tabs for each persona conversation
     persona_tabs = st.tabs([name for (name, _, _) in parsed_conversation_history])
@@ -60,13 +61,9 @@ def display_persona_conversations(conversation_log):
 
 
 def display_main_article(
-    selected_article_file_path_dict, show_reference=True
+    article_id, show_reference=True
 ):
-    from util.file_io import DemoFileIOHelper
-    
-    article_data = DemoFileIOHelper.assemble_article_data(
-        selected_article_file_path_dict
-    )
+    article_data = assemble_article_data(article_id)
 
     with st.container(height=1000, border=True):
         table_content_sidebar = st.sidebar.expander(

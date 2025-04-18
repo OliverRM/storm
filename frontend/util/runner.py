@@ -21,19 +21,6 @@ def get_demo_dir():
     return os.getcwd()
 
 
-def clear_other_page_session_state(page_index):
-    if page_index is None:
-        keys_to_delete = [key for key in st.session_state if key.startswith("page")]
-    else:
-        keys_to_delete = [
-            key
-            for key in st.session_state
-            if key.startswith("page") and f"page{page_index}" not in key
-        ]
-    for key in set(keys_to_delete):
-        del st.session_state[key]
-
-
 def set_storm_runner():
     current_working_dir = os.path.join(get_demo_dir(), "output")
     if not os.path.exists(current_working_dir):
@@ -116,3 +103,11 @@ def set_costorm_runner():
     )
     
     st.session_state["costorm_runner"] = runner
+
+def create_article(topic: str, mode: str):
+    if mode == 'wiki':
+        set_wiki_runner()
+    elif mode == 'costorm':
+        set_costorm_runner()
+    else:
+        raise ValueError("Invalid mode. Mode must be 'wiki' or 'costorm'.")
