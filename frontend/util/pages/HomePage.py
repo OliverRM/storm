@@ -4,8 +4,8 @@ import pytz
 import streamlit as st
 from streamlit_card import card
 
+from util.file_io import add_article
 from util.ui_components import DemoUIHelper
-from util.runner import create_article
 
 
 def home_page():
@@ -32,7 +32,7 @@ def home_page():
                 st.session_state["new_article_mode"] = st.segmented_control(
                     "Mode",
                     options=["wiki", "costorm"],
-                    default="wiki",
+                    default=st.session_state["new_article_mode"],
                     format_func=lambda mode: "STORM" if mode == "wiki" else "Co-STORM",
                     label_visibility="collapsed",
                 )
@@ -50,9 +50,12 @@ def home_page():
                     time.sleep(5)
                     alert.empty()
                 else:
-                    article_id = create_article(st.session_state["new_article_topic"], st.session_state["new_article_mode"])
+                    article = add_article(st.session_state["new_article_topic"], st.session_state["new_article_mode"])
+                    st.session_state["articles"][article.id] = article
                     
-                    st.session_state["selected_article"] = article_id
+                    st.session_state["selected_page"] = "article_detail"
+                    st.session_state["selected_article"] = article
+                    st.session_state["write_article_state"] = "not_started"
                     st.rerun()
     
     # Divider between create form and article list
@@ -78,7 +81,7 @@ def home_page():
                 styles=DemoUIHelper.get_article_card_UI_style(border_color="#9AD8E1"),
             )
             if hasClicked:
-                st.session_state["selected_article"] = article.id
+                st.session_state["selected_article"] = article
                 st.session_state["selected_page"] = "article_detail"
                 st.rerun()
     else:
@@ -92,4 +95,4 @@ def home_page():
 
     # Refresh button, reloads the state
     if st.button("Refresh"):
-        st.experimental_rerun()
+        st.rerun()

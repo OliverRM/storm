@@ -10,18 +10,25 @@ from knowledge_storm.lm import OpenAIModel
 from knowledge_storm.rm import SerperRM
 from knowledge_storm.collaborative_storm.engine import (
     CollaborativeStormLMConfigs, 
-    RunnerArgument,
+    RunnerArgument as CoStormRunnerArgument,
     CoStormRunner
 )
+from knowledge_storm.collaborative_storm.modules.callback import BaseCallbackHandler as CoStormBaseCallbackHandler
 from knowledge_storm.logging_wrapper import LoggingWrapper
 from knowledge_storm.lm import LitellmModel
+
+from knowledge_storm.collaborative_storm import (
+    Encoder as CoStormEncoder,
+    KnowledgeBase as CoStormKnowledgeBase,
+    ConversationTurn as CoStormConversationTurn,
+)
 
 
 def get_demo_dir():
     return os.getcwd()
 
 
-def set_storm_runner():
+def create_wiki_runner():
     current_working_dir = os.path.join(get_demo_dir(), "output")
     if not os.path.exists(current_working_dir):
         os.makedirs(current_working_dir)
@@ -57,37 +64,14 @@ def set_storm_runner():
     st.session_state["runner"] = runner
 
 
-def set_costorm_runner():
-    current_working_dir = os.path.join(get_demo_dir(), "output")
-    if not os.path.exists(current_working_dir):
-        os.makedirs(current_working_dir)
-    
+def create_costorm_runner(topic: str, callback_handler: CoStormBaseCallbackHandler) -> CoStormRunner:
     # Configure Co-STORM runner
     lm_config = CollaborativeStormLMConfigs()
-    
-    openai_kwargs = {
-        "api_key": st.secrets["OPENAI_API_KEY"],
-        "api_provider": "openai",
-        "temperature": 1.0,
-        "top_p": 0.9,
-    }
-    
-    # Use the same model for all LLM components for simplicity
-    # In production, you might want different models for different tasks
-    gpt_4o = LitellmModel(model="gpt-4o", max_tokens=1000, **openai_kwargs)
-    
-    lm_config.set_question_answering_lm(gpt_4o)
-    lm_config.set_discourse_manage_lm(gpt_4o)
-    lm_config.set_utterance_polishing_lm(gpt_4o)
-    lm_config.set_warmstart_outline_gen_lm(gpt_4o)
-    lm_config.set_question_asking_lm(gpt_4o)
-    lm_config.set_knowledge_base_lm(gpt_4o)
+    lm_config.init(lm_type=os.getenv("OPENAI_API_TYPE"))
     
     # Default arguments - can be overridden by user inputs
-    runner_argument = RunnerArgument(
-        topic="",  # Will be set by user input
-        output_dir=current_working_dir,
-        retrieve_top_k=3,
+    runner_argument = CoStormRunnerArgument(
+        topic = topic,
     )
     
     logging_wrapper = LoggingWrapper(lm_config)
@@ -99,15 +83,48 @@ def set_costorm_runner():
         lm_config=lm_config,
         runner_argument=runner_argument,
         logging_wrapper=logging_wrapper,
-        rm=rm
+        rm=rm,
+        callback_handler=callback_handler,
     )
     
-    st.session_state["costorm_runner"] = runner
+    return runner
 
-def create_article(topic: str, mode: str):
-    if mode == 'wiki':
-        set_wiki_runner()
-    elif mode == 'costorm':
-        set_costorm_runner()
-    else:
-        raise ValueError("Invalid mode. Mode must be 'wiki' or 'costorm'.")
+def create_costorm_runner_from_dict(data, callback_handler: CoStormBaseCallbackHandler) -> CoStormRunner:
+    # CoStormRunner has a method from_dict but that skips loading some
+    # required configuration. For example, it always sets the retrieval
+    # model to Bing. Therefor, we do not use it and instead reimplement
+    # it here.
+    
+    lm_config = CollaborativeStormLMConfigs()
+    lm_config.init(lm_type=os.getenv("OPENAI_API_TYPE"))
+    
+    runner_argument = CoStormRunnerArgument.from_dict(data["runner_argument"])
+    
+    logging_wrapper = LoggingWrapper(lm_config)
+    
+    # Using SerperRM by default, but can be easily changed to other RMs
+    rm = SerperRM(serper_search_api_key=st.secrets["SERPER_API_KEY"], k=runner_argument.retrieve_top_k)
+    
+    runner = CoStormRunner(
+        lm_config=lm_config,
+        runner_argument=runner_argument,
+        logging_wrapper=logging_wrapper,
+        rm=rm,
+        callback_handler=callback_handler,
+    )
+    runner.encoder = CoStormEncoder()
+    runner.conversation_history = [
+        CoStormConversationTurn.from_dict(turn) for turn in data["conversation_history"]
+    ]
+    runner.warmstart_conv_archive = [
+        CoStormConversationTurn.from_dict(turn)
+        for turn in data.get("warmstart_conv_archive", [])
+    ]
+    runner.discourse_manager.deserialize_experts(data["experts"])
+    runner.knowledge_base = CoStormKnowledgeBase.from_dict(
+        data=data["knowledge_base"],
+        knowledge_base_lm=runner.lm_config.knowledge_base_lm,
+        node_expansion_trigger_count=runner.runner_argument.node_expansion_trigger_count,
+        encoder=runner.encoder,
+    )
+    return runner

@@ -3,12 +3,15 @@ import datetime
 import json
 import os
 from typing import Dict
+import random
+import string
 
 
 @dataclass
 class Article:
     id: str
     name: str
+    mode: str
     date: datetime.datetime
 
 def get_all_articles() -> Dict[str, Article]:
@@ -28,10 +31,62 @@ def get_all_articles() -> Dict[str, Article]:
             article["id"]: Article(
                 id=article["id"],
                 name=article["name"],
+                mode=article["mode"],
                 date=datetime.datetime.fromisoformat(article["date"])
             ) for article in json.load(f)
         }
+
+def add_article(name: str, mode: str) -> Article:
+    """
+    Adds a new article to the articles data file.
+    Args:
+        name (str): The name of the new article.
+    Returns:
+        Article: The newly created Article object.
+    """
+    articles = get_all_articles()
+    article_id = ''.join(random.choices(string.ascii_lowercase, k=8))
+    article = Article(
+        id=article_id,
+        name=name,
+        mode=mode,
+        date=datetime.datetime.now()
+    )
+    articles[article_id] = article
+    with open(os.path.join(os.getcwd(), "output", "articles.json"), "w") as f:
+        json.dump(
+            [
+                {
+                    "id": article.id,
+                    "name": article.name,
+                    "mode": article.mode,
+                    "date": article.date.isoformat()
+                } 
+                for article in articles.values()
+            ], 
+            f, 
+            indent=4
+        )
     
+    print(f"Article {article_id} added with name: {name} and mode: {mode}")
+    
+    # Create the directory for the article
+    os.makedirs(os.path.join(os.getcwd(), "output", article_id))
+    
+    return article
+
+def file_exists(article_id, file_name):
+    """
+    Checks if a file with the given name exists in the directory of the given article.
+    Args:
+        article_id (str): The ID of the article for which the file is being checked.
+        file_name (str): The name of the file to be checked.
+    Returns:
+        bool: True if the file exists, False otherwise.
+    """
+    file_path = os.path.join(os.getcwd(), "output", article_id, file_name)
+    return os.path.exists(file_path)
+
 def read_txt_file(article_id, file_name):
     """
     Reads the contents of a text file and returns it as a string.
@@ -63,6 +118,30 @@ def read_json_file(article_id, file_name):
     file_path = os.path.join(os.getcwd(), "output", article_id, file_name)
     with open(file_path) as f:
         return json.load(f)
+
+def write_txt_file(data, article_id, file_name):
+    """
+    Writes a string to a text file.
+    Args:
+        data (str): The data to be written to the file.
+        article_id (str): The ID of the article for which the file is being written.
+        file_name (str): The name of the text file to be written.
+    """
+    file_path = os.path.join(os.getcwd(), "output", article_id, file_name)
+    with open(file_path, "w") as f:
+        f.write(data)
+    
+def write_json_file(data, article_id, file_name):
+    """
+    Writes a Python dictionary or list to a JSON file.
+    Args:
+        data (dict or list): The data to be written to the JSON file.
+        article_id (str): The ID of the article for which the file is being written.
+        file_name (str): The name of the JSON file to be written.
+    """
+    file_path = os.path.join(os.getcwd(), "output", article_id, file_name)
+    with open(file_path, "w") as f:
+        json.dump(data, f, indent=4)
 
 def assemble_article_data(article_id):
     """
