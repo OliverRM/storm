@@ -87,7 +87,7 @@ class stoc:
         return "\n".join(toc)
 
     @classmethod
-    def from_markdown(cls, text: str, expander=None):
+    def from_markdown(cls, text: str):
         self = cls()
         for line in text.splitlines():
             if line.startswith("###"):
@@ -96,6 +96,16 @@ class stoc:
                 self.h2(line[2:], write=False)
             elif line.startswith("#"):
                 self.h1(line[1:], write=False)
+
+        # from_markdown used not end here but continue with what now is
+        # render_article, which then ended by calling self.toc.
+        # 
+        # The old from_markdown is equivalent to:
+        # from_markdown, render_article, toc
+
+    
+    @classmethod
+    def render_article(cls, text: str):
         # customize markdown font size
         custom_css = """
         <style>
@@ -112,7 +122,6 @@ class stoc:
         st.markdown(custom_css, unsafe_allow_html=True)
 
         st.write(text)
-        self.toc(expander=expander)
 
 
 def normalize(s):

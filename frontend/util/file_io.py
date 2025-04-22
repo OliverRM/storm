@@ -6,6 +6,9 @@ from typing import Dict
 import random
 import string
 
+from knowledge_storm.dataclass import KnowledgeBase
+from knowledge_storm.interface import Information
+
 
 @dataclass
 class Article:
@@ -191,14 +194,26 @@ def assemble_article_data(article_id):
         return article_data
     return None
 
-def _construct_citation_dict_from_search_result(search_results):
+def _construct_citation_dict_from_search_result(search_results) -> Dict[int, dict]:
     if search_results is None:
         return None
-    citation_dict = {}
+    citation_dict: Dict[int, dict] = {}
     for url, index in search_results["url_to_unified_index"].items():
         citation_dict[index] = {
             "url": url,
             "title": search_results["url_to_info"][url]["title"],
             "snippets": search_results["url_to_info"][url]["snippets"],
+        }
+    return citation_dict
+
+def construct_citation_dict_from_knowledge_base(knowledge_base: KnowledgeBase) -> Dict[int, dict]:
+    citation_dict: Dict[int, dict] = {}
+
+    for uuid, info in knowledge_base.info_uuid_to_info_dict.items():
+        info: Information
+        citation_dict[uuid] = {
+            "url": info.url,
+            "title": info.title,
+            "snippets": info.snippets,
         }
     return citation_dict

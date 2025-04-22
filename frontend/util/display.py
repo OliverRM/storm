@@ -1,8 +1,9 @@
 import streamlit as st
+from knowledge_storm.collaborative_storm.engine import CoStormRunner
 from stoc import stoc
 
 from util.text_processing import DemoTextProcessingHelper
-from util.file_io import read_json_file, assemble_article_data
+from util.file_io import construct_citation_dict_from_knowledge_base, read_json_file, assemble_article_data, read_txt_file
 
 
 def _display_main_article_text(article_text, citation_dict, table_content_sidebar):
@@ -19,7 +20,9 @@ def _display_main_article_text(article_text, citation_dict, table_content_sideba
     )
     # '$' needs to be changed to '\$' to avoid being interpreted as LaTeX in st.markdown()
     article_text = article_text.replace("$", "\\$")
-    stoc.from_markdown(article_text, table_content_sidebar)
+    stoc.from_markdown(article_text)
+    stoc.render_article(article_text)
+    stoc.toc(table_content_sidebar)
 
 
 def _display_references(citation_dict):
@@ -60,7 +63,7 @@ def display_persona_conversations(article_id):
                         st.markdown(message["content"])
 
 
-def display_main_article(
+def display_wiki_article_toc_and_cits(
     article_id, show_reference=True
 ):
     article_data = assemble_article_data(article_id)
@@ -80,3 +83,28 @@ def display_main_article(
         with st.sidebar.expander("**References**", expanded=True):
             with st.container(height=800, border=False):
                 _display_references(citation_dict=article_data.get("citations", {}))
+
+def display_costorm_article(
+    article_id, runner: CoStormRunner, show_reference=True
+) -> bool:
+    article_text = read_txt_file(article_id, "article.txt")
+    article_text = DemoTextProcessingHelper.parse(article_text)
+    
+    citation_dict = construct_citation_dict_from_knowledge_base(runner.knowledge_base)
+    
+    # Post-process the generated article for better display.
+    if "Write the lead section:" in article_text:
+        article_text = article_text[
+            article_text.find("Write the lead section:")
+            + len("Write the lead section:") :
+        ]
+    if article_text[0] == "#":
+        article_text = "\n".join(article_text.split("\n")[1:])
+    article_text = DemoTextProcessingHelper.add_inline_citation_link(
+        article_text, citation_dict
+    )
+    # '$' needs to be changed to '\$' to avoid being interpreted as LaTeX in st.markdown()
+    article_text = article_text.replace("$", "\\$")
+    
+    # Historically handled by stoc
+    stoc.render_article(article_text)

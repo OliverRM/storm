@@ -4,7 +4,7 @@ from knowledge_storm import CoStormRunner
 from knowledge_storm.dataclass import KnowledgeNode
 
 from util.file_io import Article, file_exists, read_json_file, read_txt_file, write_json_file, write_txt_file
-from util.display import display_main_article, display_persona_conversations
+from util.display import display_wiki_article_toc_and_cits, display_costorm_article, display_persona_conversations
 from util.callback_handlers import WikiCallbackHandler, CoSTORMCallbackHandler
 from util.runner import create_costorm_runner, create_costorm_runner_from_dict
 
@@ -178,9 +178,9 @@ def article_detail_page():
     with article_tab:
         if article.mode == "wiki":
             # Display the selected article
-            display_main_article(article.id)
+            display_wiki_article_toc_and_cits(article.id)
         elif article.mode == "costorm":
-            exists = file_exists(article.id, "report.txt")
+            exists = file_exists(article.id, "article.txt")
             
             if not exists:
                 st.info("It is time to generate the article. Click the button below to start.")
@@ -194,10 +194,9 @@ def article_detail_page():
                     callback_handler.status_container = status
                     report = runner.generate_report()
                     status.info("Saving article...")
-                    write_txt_file(report, article.id, "report.txt")
+                    write_txt_file(report, article.id, "article.txt")
                     status.update(state="complete")
                     st.rerun()
             
             if exists:
-                report = read_txt_file(article.id, "report.txt")
-                st.markdown(report)
+                display_costorm_article(article.id, st.session_state["runner"])
