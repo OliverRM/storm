@@ -4,7 +4,7 @@ from knowledge_storm import CoStormRunner
 from knowledge_storm.dataclass import KnowledgeNode
 
 from util.file_io import Article, file_exists, read_json_file, read_txt_file, write_json_file, write_txt_file
-from util.display import display_references, display_toc, display_wiki_article, display_costorm_article, display_persona_conversations
+from util.display import display_costorm_toc, display_references, display_wiki_toc, display_wiki_article, display_costorm_article, display_persona_conversations
 from util.callback_handlers import WikiCallbackHandler, CoSTORMCallbackHandler
 from util.runner import create_costorm_runner, create_costorm_runner_from_dict
 
@@ -22,12 +22,15 @@ def article_detail_page():
             st.session_state["selected_page"] = "home"
             st.rerun()
         
+        tab_toc, tab_cits = st.tabs(["Table of Contents", "References"])
         if article.mode == "wiki":
-            tab_toc, tab_cits = st.tabs(["Table of Contents", "References"])
             with tab_toc:
-                display_toc(article.id)
+                display_wiki_toc(article.id)
             with tab_cits:
                 display_references(article.id)
+        elif article.mode == "costorm":
+            with tab_toc:
+                display_costorm_toc(st.session_state["runner"])
 
 
     # Display article title
@@ -137,14 +140,6 @@ def article_detail_page():
             # Render past conversation
             for turn in runner.conversation_history:
                 st.write(turn)
-            
-            def render_node(node: KnowledgeNode):
-                # kb.write(f"{node.name}: {node.content}")
-                st.sidebar.write(node)
-                for child in node.children:
-                    render_node(child)
-            
-            render_node(runner.knowledge_base.root)
         
             if st.session_state["write_article_state"] == "conversation":
                 # Text box to send new chat message

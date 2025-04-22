@@ -5,6 +5,8 @@ import re
 import streamlit as st
 import unidecode
 
+from knowledge_storm.dataclass import KnowledgeBase
+
 DISABLE_LINK_CSS = """
 <style>
 a.toc {
@@ -18,17 +20,17 @@ class stoc:
     def __init__(self):
         self.toc_items = list()
 
-    def h1(self, text: str, write: bool = True):
+    def h1(self, text: str, write: bool = False):
         if write:
             st.write(f"# {text}")
         self.toc_items.append(("h1", text))
 
-    def h2(self, text: str, write: bool = True):
+    def h2(self, text: str, write: bool = False):
         if write:
             st.write(f"## {text}")
         self.toc_items.append(("h2", text))
 
-    def h3(self, text: str, write: bool = True):
+    def h3(self, text: str, write: bool = False):
         if write:
             st.write(f"### {text}")
         self.toc_items.append(("h3", text))
@@ -103,6 +105,20 @@ class stoc:
         # The old from_markdown is equivalent to:
         # from_markdown, render_article, toc
 
+        return self
+    
+    @classmethod
+    def from_knowledge_base(cls, kb: KnowledgeBase):
+        self = cls()
+        
+        root = kb.root
+        for h1 in root.children:
+            self.h1(h1.name)
+            for h2 in h1.children:
+                self.h2(h2.name)
+                for h3 in h2.children:
+                    self.h3(h3.name)
+        
         return self
 
 

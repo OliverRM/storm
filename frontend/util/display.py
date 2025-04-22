@@ -3,7 +3,7 @@ from knowledge_storm.collaborative_storm.engine import CoStormRunner
 from stoc import stoc
 
 from util.text_processing import DemoTextProcessingHelper
-from util.file_io import construct_citation_dict_from_knowledge_base, read_json_file, assemble_article_data, read_txt_file
+from util.file_io import Article, construct_citation_dict_from_knowledge_base, read_json_file, assemble_article_data, read_txt_file
 
 
 def display_references(article_id):
@@ -47,12 +47,17 @@ def display_persona_conversations(article_id):
                         st.markdown(message["content"])
 
 
-def display_toc(article_id):
+def display_wiki_toc(article_id):
     article_data = assemble_article_data(article_id)
     article_text = article_data.get("article", "")
     toc = stoc.from_markdown(article_text)
     toc.toc()
 
+
+def display_costorm_toc(runner: CoStormRunner):
+    knowledge_base = runner.knowledge_base
+    toc = stoc.from_knowledge_base(knowledge_base)
+    toc.toc()
 
 def _display_article(article_text: str, citation_dict: dict):
     # Post-process the generated article for better display.
