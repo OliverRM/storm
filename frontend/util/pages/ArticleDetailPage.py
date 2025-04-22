@@ -4,7 +4,7 @@ from knowledge_storm import CoStormRunner
 from knowledge_storm.dataclass import KnowledgeNode
 
 from util.file_io import Article, file_exists, read_json_file, read_txt_file, write_json_file, write_txt_file
-from util.display import display_costorm_toc, display_references, display_wiki_toc, display_wiki_article, display_costorm_article, display_persona_conversations
+from util.display import display_wiki_references, display_costorm_references, display_costorm_toc, display_wiki_toc, display_wiki_article, display_costorm_article, display_persona_conversations
 from util.callback_handlers import WikiCallbackHandler, CoSTORMCallbackHandler
 from util.runner import create_costorm_runner, create_costorm_runner_from_dict
 
@@ -27,10 +27,12 @@ def article_detail_page():
             with tab_toc:
                 display_wiki_toc(article.id)
             with tab_cits:
-                display_references(article.id)
+                display_wiki_references(article.id)
         elif article.mode == "costorm":
             with tab_toc:
                 display_costorm_toc(st.session_state["runner"])
+            with tab_cits:
+                display_costorm_references(st.session_state["runner"])
 
 
     # Display article title

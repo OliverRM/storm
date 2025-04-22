@@ -6,14 +6,15 @@ from util.text_processing import DemoTextProcessingHelper
 from util.file_io import Article, construct_citation_dict_from_knowledge_base, read_json_file, assemble_article_data, read_txt_file
 
 
-def display_references(article_id):
-    article_data = assemble_article_data(article_id)
-    citation_dict = article_data.get("citations", {})
-
+def _display_references(citation_dict: dict):
     if citation_dict:
-        reference_list = [f"reference [{i}]" for i in range(1, len(citation_dict) + 1)]
-        selected_key = st.selectbox("Select a reference", reference_list)
-        citation_val = citation_dict[reference_list.index(selected_key) + 1]
+        reference_list = citation_dict.keys()
+        selected_key = st.selectbox(
+            "Select a reference",
+            reference_list,
+            format_func=lambda uuid: f"{uuid}: {citation_dict[uuid]["title"]}",
+        )
+        citation_val = citation_dict[selected_key]
         citation_val["title"] = citation_val["title"].replace("$", "\\$")
         st.markdown(f"**Title:** {citation_val['title']}")
         st.markdown(f"**Url:** {citation_val['url']}")
@@ -21,6 +22,16 @@ def display_references(article_id):
         st.markdown(f"**Highlights:**\n\n {snippets}")
     else:
         st.markdown("**No references available**")
+
+def display_wiki_references(article_id):
+    article_data = assemble_article_data(article_id)
+    citation_dict = article_data.get("citations", {})
+    _display_references(citation_dict)
+
+def display_costorm_references(runner: CoStormRunner):
+    knowledge_base = runner.knowledge_base
+    citation_dict = construct_citation_dict_from_knowledge_base(knowledge_base)
+    _display_references(citation_dict)
 
 
 def display_persona_conversations(article_id):
