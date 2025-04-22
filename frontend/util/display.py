@@ -6,26 +6,10 @@ from util.text_processing import DemoTextProcessingHelper
 from util.file_io import construct_citation_dict_from_knowledge_base, read_json_file, assemble_article_data, read_txt_file
 
 
-def _display_main_article_text(article_text, citation_dict, table_content_sidebar):
-    # Post-process the generated article for better display.
-    if "Write the lead section:" in article_text:
-        article_text = article_text[
-            article_text.find("Write the lead section:")
-            + len("Write the lead section:") :
-        ]
-    if article_text[0] == "#":
-        article_text = "\n".join(article_text.split("\n")[1:])
-    article_text = DemoTextProcessingHelper.add_inline_citation_link(
-        article_text, citation_dict
-    )
-    # '$' needs to be changed to '\$' to avoid being interpreted as LaTeX in st.markdown()
-    article_text = article_text.replace("$", "\\$")
-    stoc.from_markdown(article_text)
-    stoc.render_article(article_text)
-    stoc.toc(table_content_sidebar)
+def display_references(article_id):
+    article_data = assemble_article_data(article_id)
+    citation_dict = article_data.get("citations", {})
 
-
-def _display_references(citation_dict):
     if citation_dict:
         reference_list = [f"reference [{i}]" for i in range(1, len(citation_dict) + 1)]
         selected_key = st.selectbox("Select a reference", reference_list)
@@ -63,35 +47,14 @@ def display_persona_conversations(article_id):
                         st.markdown(message["content"])
 
 
-def display_wiki_article_toc_and_cits(
-    article_id, show_reference=True
-):
+def display_toc(article_id):
     article_data = assemble_article_data(article_id)
+    article_text = article_data.get("article", "")
+    toc = stoc.from_markdown(article_text)
+    toc.toc()
 
-    with st.container(height=1000, border=True):
-        table_content_sidebar = st.sidebar.expander(
-            "**Table of contents**", expanded=True
-        )
-        _display_main_article_text(
-            article_text=article_data.get("article", ""),
-            citation_dict=article_data.get("citations", {}),
-            table_content_sidebar=table_content_sidebar,
-        )
 
-    # display reference panel
-    if show_reference and "citations" in article_data:
-        with st.sidebar.expander("**References**", expanded=True):
-            with st.container(height=800, border=False):
-                _display_references(citation_dict=article_data.get("citations", {}))
-
-def display_costorm_article(
-    article_id, runner: CoStormRunner, show_reference=True
-) -> bool:
-    article_text = read_txt_file(article_id, "article.txt")
-    article_text = DemoTextProcessingHelper.parse(article_text)
-    
-    citation_dict = construct_citation_dict_from_knowledge_base(runner.knowledge_base)
-    
+def _display_article(article_text: str, citation_dict: dict):
     # Post-process the generated article for better display.
     if "Write the lead section:" in article_text:
         article_text = article_text[
@@ -106,5 +69,38 @@ def display_costorm_article(
     # '$' needs to be changed to '\$' to avoid being interpreted as LaTeX in st.markdown()
     article_text = article_text.replace("$", "\\$")
     
-    # Historically handled by stoc
-    stoc.render_article(article_text)
+    # customize markdown font size
+    custom_css = """
+    <style>
+        /* Adjust the font size for headings */
+        h1 { font-size: 28px; }
+        h2 { font-size: 24px; }
+        h3 { font-size: 22px; }
+        h4 { font-size: 20px; }
+        h5 { font-size: 18px; }
+        /* Adjust the font size for normal text */
+        p { font-size: 18px; }
+    </style>
+    """
+    st.html(custom_css)
+    st.markdown(article_text)
+
+
+def display_wiki_article(article_id):
+    article_data = assemble_article_data(article_id)
+
+    article_text=article_data.get("article", "")
+    citation_dict=article_data.get("citations", {})
+
+    _display_article(article_text, citation_dict)
+
+
+def display_costorm_article(
+    article_id, runner: CoStormRunner, show_reference=True
+) -> bool:
+    article_text = read_txt_file(article_id, "article.txt")
+    article_text = DemoTextProcessingHelper.parse(article_text)
+    
+    citation_dict = construct_citation_dict_from_knowledge_base(runner.knowledge_base)
+    
+    _display_article(article_text, citation_dict)

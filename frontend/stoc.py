@@ -33,23 +33,18 @@ class stoc:
             st.write(f"### {text}")
         self.toc_items.append(("h3", text))
 
-    def toc(self, expander):
+    def toc(self):
         st.write(DISABLE_LINK_CSS, unsafe_allow_html=True)
-        # st.sidebar.caption("Table of contents")
-        if expander is None:
-            expander = st.sidebar.expander("**Table of contents**", expanded=True)
-        with expander:
-            with st.container(height=600, border=False):
-                markdown_toc = ""
-                for title_size, title in self.toc_items:
-                    h = int(title_size.replace("h", ""))
-                    markdown_toc += (
-                        " " * 2 * h
-                        + "- "
-                        + f'<a href="#{normalize(title)}" class="toc"> {title}</a> \n'
-                    )
-                # st.sidebar.write(markdown_toc, unsafe_allow_html=True)
-                st.write(markdown_toc, unsafe_allow_html=True)
+        markdown_toc = ""
+        for title_size, title in self.toc_items:
+            h = int(title_size.replace("h", ""))
+            markdown_toc += (
+                " " * 2 * h
+                + "- "
+                + f'<a href="#{normalize(title)}" class="toc"> {title}</a> \n'
+            )
+        # st.sidebar.write(markdown_toc, unsafe_allow_html=True)
+        st.write(markdown_toc, unsafe_allow_html=True)
 
     @classmethod
     def get_toc(cls, markdown_text: str, topic=""):
@@ -89,7 +84,12 @@ class stoc:
     @classmethod
     def from_markdown(cls, text: str):
         self = cls()
-        for line in text.splitlines():
+        lines = text.splitlines()
+        
+        if (lines[0] == "# summary"):
+            lines = lines[1:]
+        
+        for line in lines:
             if line.startswith("###"):
                 self.h3(line[3:], write=False)
             elif line.startswith("##"):
@@ -103,25 +103,7 @@ class stoc:
         # The old from_markdown is equivalent to:
         # from_markdown, render_article, toc
 
-    
-    @classmethod
-    def render_article(cls, text: str):
-        # customize markdown font size
-        custom_css = """
-        <style>
-            /* Adjust the font size for headings */
-            h1 { font-size: 28px; }
-            h2 { font-size: 24px; }
-            h3 { font-size: 22px; }
-            h4 { font-size: 20px; }
-            h5 { font-size: 18px; }
-            /* Adjust the font size for normal text */
-            p { font-size: 18px; }
-        </style>
-        """
-        st.markdown(custom_css, unsafe_allow_html=True)
-
-        st.write(text)
+        return self
 
 
 def normalize(s):
